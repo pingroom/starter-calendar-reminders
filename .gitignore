@@ -1,0 +1,7 @@
+node_modules/
+.env
+.pingroom/
+.calendar/
+calendar.ics
+config.json
+*.tmp

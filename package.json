@@ -1,0 +1,17 @@
+{
+  "name": "pingroom-starter-calendar-reminders",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Send PingRoom reminders from complete UTC calendar exports.",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node scripts/remind.mjs",
+    "connect": "node scripts/connect.mjs",
+    "resolve": "node scripts/resolve.mjs",
+    "demo": "node scripts/demo.mjs",
+    "test": "node --test"
+  },
+  "dependencies": { "@pingroom/cli": "0.12.0", "ical.js": "2.2.1" }
+}

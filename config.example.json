@@ -1,0 +1,6 @@
+{
+  "calendarFile": "calendar.ics",
+  "stateDirectory": ".calendar",
+  "leadMinutes": 15,
+  "snapshotMaxAgeMinutes": 5
+}
