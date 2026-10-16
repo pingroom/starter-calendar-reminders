@@ -39,12 +39,21 @@ export function parseCalendar(buffer) {
   catch { throw new Error('Calendar must be valid UTF-8.'); }
   // Validate lexical forms before the parser can normalize invalid dates or integers.
   const lines = source.replace(/\r?\n[ \t]/g, '').split(/\r?\n/);
+  const componentNames = [];
   for (const line of lines) {
     if (line.length > 8192 || line.includes('\0')) throw new Error('Calendar line exceeds its limit or contains a null byte.');
+    // ical.js does not check that an END name matches the component it closes.
+    const delimiter = /^(BEGIN|END):(.+)$/i.exec(line);
+    if (delimiter) {
+      const name = delimiter[2].toLowerCase();
+      if (delimiter[1].toLowerCase() === 'begin') componentNames.push(name);
+      else if (componentNames.pop() !== name) throw new Error('Calendar component delimiters must have matching BEGIN and END names.');
+    }
     if (/^(DTSTART|DTSTAMP)(?:;|:)/i.test(line) && !/^(DTSTART|DTSTAMP):\d{8}T\d{6}Z$/i.test(line)) throw new Error('Only UTC DTSTART and DTSTAMP without parameters are supported.');
     if (/^SEQUENCE(?:;|:)/i.test(line) && !/^SEQUENCE:\d{1,9}$/i.test(line)) throw new Error('SEQUENCE must be a nonnegative integer.');
     if (/^GEO(?:;|:)/i.test(line) && !/^GEO:[+-]?(?:\d+(?:\.\d+)?|\.\d+);[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/i.test(line)) throw new Error('GEO must contain decimal latitude;longitude.');
   }
+  if (componentNames.length) throw new Error('Calendar component delimiters must have matching BEGIN and END names.');
   let calendar;
   try { calendar = new ICAL.Component(ICAL.parse(source)); }
   catch { throw new Error('Could not parse the ICS snapshot.'); }

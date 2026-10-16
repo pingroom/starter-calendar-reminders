@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseCalendar, reminderFor, INPUT_LIMIT } from '../src/calendar.mjs';
@@ -41,6 +41,36 @@ test('parses folded text, UTC start, URL and GEO; only selected fields enter a r
   assert.equal(reminder.locationLabel, 'Room A, upstairs');
   assert.equal(JSON.stringify(reminder).includes('private'), false);
   assert.equal(JSON.stringify(reminder).includes('never forward'), false);
+});
+
+test('accepts folded, case-insensitive component delimiters', () => {
+  const source = ics()
+    .replace('BEGIN:VCALENDAR', 'bEgIn:vCa\n LeNdAr')
+    .replace('BEGIN:VEVENT', 'bEgIn:vEv\n\tEnT')
+    .replace('END:VEVENT', 'EnD:vE\n vEnT')
+    .replace('END:VCALENDAR', 'eNd:VcAl\n\tEnDaR')
+    .replaceAll('\n', '\r\n');
+  assert.deepEqual(parse(source), parse(ics()));
+});
+
+test('mismatched component delimiters reject snapshots without sends or state changes', async (t) => {
+  const malformed = {
+    event: ics().replace('END:VEVENT', 'END:VTODO'),
+    calendar: ics().replace('END:VCALENDAR', 'END:VTODO'),
+    crossed: ics().replace('END:VEVENT\nEND:VCALENDAR', 'END:VCALENDAR\nEND:VEVENT'),
+  };
+  for (const [name, source] of Object.entries(malformed)) {
+    await t.test(name, async (t) => {
+      const f = await fixture(t, []);
+      await f.run();
+      const statePath = join(f.config.stateDirectory, 'state.json');
+      const before = await readFile(statePath);
+      await f.publish(source);
+      await assert.rejects(f.run(), /component delimiter/i);
+      assert.equal(f.sent.length, 0);
+      assert.deepEqual(await readFile(statePath), before);
+    });
+  }
 });
 
 test('rejects invalid calendar forms, ambiguous properties, dates, coordinates, and links', () => {
