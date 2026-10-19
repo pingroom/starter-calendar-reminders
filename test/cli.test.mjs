@@ -28,8 +28,9 @@ test('real CLI 0.12.0 sends one reminder with link and location; persisted repla
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     requests.push({ method: req.method, path: req.url, auth: req.headers.authorization, body: JSON.parse(Buffer.concat(chunks)) });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ notification_id: NOTIFICATION_ID, success: true }));
+    // The agent route answers 201 with the created notification row; its `id` is the notification ID.
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ id: NOTIFICATION_ID, type: 'sent' }));
   });
   const directory = await mkdtemp(join(tmpdir(), 'calendar-cli-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
