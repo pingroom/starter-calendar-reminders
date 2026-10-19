@@ -5,5 +5,6 @@ node_modules/
 .pingroom/
 .calendar/
 /calendar.ics
+/calendar.next.ics
 config.json
 *.tmp
