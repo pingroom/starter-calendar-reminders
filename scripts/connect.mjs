@@ -4,7 +4,7 @@ import { connectionHome, loadEnvironment } from '../src/config.mjs';
 
 try {
   loadEnvironment();
-  const child = spawn(process.execPath, [cliPath, 'pair', '--agent-label', 'Calendar-reminders-starter'], {
+  const child = spawn(process.execPath, [cliPath, 'pair', '--agent-label', 'Calendar-reminders-starter', '--api', 'https://api.pingroom.io'], {
     stdio: 'inherit', env: { ...process.env, PINGROOM_HOME: connectionHome() },
   });
   child.once('error', () => { console.error('Could not start the CLI. Run npm ci first.'); process.exitCode = 1; });
